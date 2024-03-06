@@ -40,6 +40,15 @@ def getProdutos(request):
     
     return listProduto
 
+@router.get('/produtos-descricao/{cod_produto}')
+def getDescProduto(request, cod_produto:int):
+    cursor = connection.cursor()
+
+    cursor.execute(f"select desc_produto from ek_produto where cod_produto = {cod_produto}")
+    desc_produto = cursor.fetchall()[0][0]
+
+    return {"desc_produto" : desc_produto}
+
 @router.get('contratos')
 def getContratos(request):
     cursor = connection.cursor()
