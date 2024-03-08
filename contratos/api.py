@@ -1,6 +1,7 @@
-from ninja import Router
+from ninja import Router , Schema
 from django.db import connection
 from datetime import datetime , timezone
+import json
 
 router = Router()
 
@@ -8,7 +9,13 @@ router = Router()
 def getClientes(request):
     cursor = connection.cursor()
 
-    cursor.execute('select cod_pessoa , nome from ek_pessoa order by cod_pessoa')
+    cursor.execute('''
+                        (select 0 as cod_pessoa, 'Selecione o cliente' as nome)
+
+                                            UNION ALL
+
+                        (select cod_pessoa, nome from ek_pessoa order by cod_pessoa)
+                ''')
 
     resPessoa = cursor.fetchall()
 
@@ -26,7 +33,13 @@ def getClientes(request):
 def getProdutos(request):
     cursor = connection.cursor()
 
-    cursor.execute('select cod_produto , desc_produto from ek_produto order by cod_produto limit 50')
+    cursor.execute('''
+                        (select 0 as cod_produto, 'Selecione um produto' as desc_produto)
+
+                                                    UNION ALL
+
+                        (select cod_produto , desc_produto from ek_produto order by cod_produto)
+                    ''')
 
     resProduto = cursor.fetchall()
 
@@ -81,27 +94,49 @@ def getContratos(request):
     
     return listContratos
 
+class Contrato(Schema):
+    num_empresa: int = 1
+    num_contrato: int = 0
+    vl_contrato: int = 0
+
+
+    client: int
+    franchise: str
+    hours: str
+    initialDate: str
+    finalDate: str
+    cabos: bool = False
+    chvTransAuto: bool = False
+    chvTransManual: bool = False
+    combustivel: bool = False
+    qtd_combustivel: float = 0
+    instalacao: bool = False
+    manutencaoPeriodicaa: bool = False
+    transporte: bool = False
+    distancia_transporte: float = 0
+
+
 @router.post('new-contract')
-def newContract( request, data , listItems ):
+def newContract( request , data: Contrato ):
     cursor = connection.cursor()
 
     cursor.execute(f'''
-                        insert into public.ek_contrato(
-                            num_empresa, cod_pessoa, numero_contrato, vl_contrato, dt_inicio_contrato, dt_fim_contrato, dt_cadastro, status, combustivel, qtd_combustivel, cabos, chave_transf_manual, chave_transf_auto, transporte, instalacao, manutencao, distancia_transporte, franquia, carga_horaria
+                        insert into ek_contrato(
+                            num_empresa, cod_pessoa, vl_contrato, dt_inicio_contrato, dt_fim_contrato, dt_cadastro, status, combustivel, qtd_combustivel, cabos, chave_transf_manual, chave_transf_auto, transporte, instalacao, manutencao, distancia_transporte, franquia, carga_horaria
                         ) values (
-                            {data.num_empresa},{data.cod_pessoa},{data.num_contrato},{data.vl_contrato},{data.dt_inicio_contrato},{data.dt_fim_contrato},now(), 'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chv_trans_manual},{data.chv_trans_auto},{data.transporte},{data.instalacao},{data.manutencao},{data.distancia_transporte},{data.franquia},{data.carga_horaria}
-                        ) returning seq_contrato
+                            1,{data.client},{data.vl_contrato},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodicaa},{data.distancia_transporte},{data.franchise},{data.hours}
+                        ) 
                    ''')
-    seq_contrato = cursor.fetchall()[0]
-    
-    for item in listItems:
+    # seq_contrato = cursor.fetchall()[0]
 
-        cursor.execute(f"select desc_produto from ek_produto where cod_produto = {item.cod_produto}")
-        desc_produto = cursor.fetchall()[0][0]
+    # for item in listItems:
 
-        cursor.execute(f'''
-                       INSERT INTO public.ek_contrato_detalhe(
-                             seq_contrato, cod_produto, desc_item_contrato, vl_item_contrato, quantidade, unid_medida)
-                            VALUES ({seq_contrato}, {item.cod_produto}, {desc_produto}, {item.vl_item_contrato}, {item.quantidade}, {item.unid_medida});
+    #     cursor.execute(f"select desc_produto from ek_produto where cod_produto = {item.cod_produto}")
+    #     desc_produto = cursor.fetchall()[0][0]
+
+    #     cursor.execute(f'''
+    #                    INSERT INTO public.ek_contrato_detalhe(
+    #                          seq_contrato, cod_produto, desc_item_contrato, vl_item_contrato, quantidade, unid_medida)
+    #                         VALUES ({seq_contrato}, {item.cod_produto}, {desc_produto}, {item.vl_item_contrato}, {item.quantidade}, {item.unid_medida});
                        
-                       ''')
+                    #    ''')

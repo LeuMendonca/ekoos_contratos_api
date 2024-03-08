@@ -1,0 +1,41 @@
+ALTER TABLE ek_contrato ADD COLUMN transportev2 boolean;
+ALTER TABLE ek_contrato add column combustivelv2 boolean;
+ALTER TABLE ek_contrato add column qtd_combustivelv2 boolean;
+ALTER TABLE ek_contrato ADD COLUMN chave_transf_manualv2 boolean;
+ALTER TABLE ek_contrato ADD COLUMN chave_transf_autov2 boolean;
+ALTER TABLE ek_contrato ADD COLUMN instalacaov2 boolean;
+ALTER TABLE ek_contrato ADD COLUMN manutencaov2 boolean;
+ALTER TABLE ek_contrato ADD COLUMN cabosv2 boolean;
+
+UPDATE ek_contrato SET 
+	transportev2 = (CASE WHEN transporte = 'S' THEN true ELSE false END),
+	combustivelv2 = (CASE WHEN combustivel = 'S' THEN true ELSE false END),
+	chave_transf_manualv2 = (CASE WHEN chave_transf_manual = 'S' THEN true ELSE false END),
+	chave_transf_autov2 =  (CASE WHEN chave_transf_auto = 'S' THEN true ELSE false END),
+	instalacaov2 = (CASE WHEN instalacao = 'S' THEN true ELSE false END),
+	cabosv2 = (CASE WHEN cabos = 'S' THEN true ELSE false END),	
+	manutencaov2 = (CASE WHEN manutencao = 'S' THEN true ELSE false END)
+
+	
+
+ALTER TABLE ek_contrato DROP  COLUMN transporte;
+ALTER TABLE ek_contrato DROP  column combustivel;
+ALTER TABLE ek_contrato DROP  column cabos;
+ALTER TABLE ek_contrato DROP  COLUMN chave_transf_manual;
+ALTER TABLE ek_contrato DROP  COLUMN chave_transf_auto;
+ALTER TABLE ek_contrato DROP  COLUMN instalacao;
+ALTER TABLE ek_contrato DROP  COLUMN manutencao;
+
+ALTER TABLE ek_contrato RENAME COLUMN nome_coluna_antiga TO nome_coluna_nova;
+
+ALTER TABLE ek_contrato RENAME COLUMN transportev2 TO transporte;
+ALTER TABLE ek_contrato RENAME column combustivelv2 TO combustivel;
+ALTER TABLE ek_contrato RENAME column cabosv2 TO cabos;
+ALTER TABLE ek_contrato RENAME COLUMN chave_transf_manualv2 TO chave_transf_manual;
+ALTER TABLE ek_contrato RENAME COLUMN chave_transf_autov2 TO chave_transf_auto;
+ALTER TABLE ek_contrato RENAME COLUMN instalacaov2 TO instalacao;
+ALTER TABLE ek_contrato RENAME COLUMN manutencaov2 TO manutencao;
+
+select * from ek_contrato
+
+select * from ek_contrato order by seq_contrato desc
