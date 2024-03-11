@@ -1,7 +1,7 @@
 from ninja import Router , Schema
 from django.db import connection
 from datetime import datetime , timezone
-import json
+from typing import List
 
 router = Router()
 
@@ -34,11 +34,11 @@ def getProdutos(request):
     cursor = connection.cursor()
 
     cursor.execute('''
-                        (select 0 as cod_produto, 'Selecione um produto' as desc_produto)
+                        (select '0' as cod_produto, 'Selecione um produto' as desc_produto)
 
                                                     UNION ALL
 
-                        (select cod_produto , desc_produto from ek_produto order by cod_produto)
+                        (select cod_produto::varchar , desc_produto from ek_produto order by cod_produto)
                     ''')
 
     resProduto = cursor.fetchall()
@@ -86,10 +86,10 @@ def getContratos(request):
         listContratos.append({
             'seq_contrato' : contrato[0],
             'cod_pessoa' : contrato[1],
-            'nome' : contrato[2],
-            'vl_contrato' : contrato[3],
-            'dt_inicio' : datetime.strftime(contrato[4] , "%d/%m/%Y"),
-            'dt_fim' : datetime.strftime(contrato[5] , "%d/%m/%Y"),
+            'name' : contrato[2],
+            'currencyContract' : contrato[3],
+            'dateStart' : datetime.strftime(contrato[4] , "%d/%m/%Y"),
+            'dateEnd' : datetime.strftime(contrato[5] , "%d/%m/%Y"),
         })
     
     return listContratos
@@ -115,9 +115,16 @@ class Contrato(Schema):
     transporte: bool = False
     distancia_transporte: float = 0
 
+class Itens(Schema):
+    seq_contrato: int = 0
+    product: int
+    descProduct: str 
+    unitPrice: float
+    amount: int
+    unit: str
 
 @router.post('new-contract')
-def newContract( request , data: Contrato ):
+def newContract( request ,data: Contrato , listItems: List[Itens] ):
     cursor = connection.cursor()
 
     cursor.execute(f'''
@@ -125,18 +132,15 @@ def newContract( request , data: Contrato ):
                             num_empresa, cod_pessoa, vl_contrato, dt_inicio_contrato, dt_fim_contrato, dt_cadastro, status, combustivel, qtd_combustivel, cabos, chave_transf_manual, chave_transf_auto, transporte, instalacao, manutencao, distancia_transporte, franquia, carga_horaria
                         ) values (
                             1,{data.client},{data.vl_contrato},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodicaa},{data.distancia_transporte},{data.franchise},{data.hours}
-                        ) 
+                        ) returning seq_contrato
                    ''')
-    # seq_contrato = cursor.fetchall()[0]
+    seq_contrato = cursor.fetchall()[0][0]
+    print(seq_contrato)
 
-    # for item in listItems:
+    for item in listItems:
 
-    #     cursor.execute(f"select desc_produto from ek_produto where cod_produto = {item.cod_produto}")
-    #     desc_produto = cursor.fetchall()[0][0]
-
-    #     cursor.execute(f'''
-    #                    INSERT INTO public.ek_contrato_detalhe(
-    #                          seq_contrato, cod_produto, desc_item_contrato, vl_item_contrato, quantidade, unid_medida)
-    #                         VALUES ({seq_contrato}, {item.cod_produto}, {desc_produto}, {item.vl_item_contrato}, {item.quantidade}, {item.unid_medida});
-                       
-                    #    ''')
+        cursor.execute(f'''
+                       INSERT INTO public.ek_contrato_detalhe(
+                             seq_contrato, cod_produto, desc_item_contrato, vl_item_contrato, quantidade, unid_medida)
+                            VALUES ({seq_contrato}, {item.product}, '{item.descProduct}', {item.unitPrice}, {item.amount}, '{item.unit}');
+                       ''')
