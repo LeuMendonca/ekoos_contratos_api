@@ -63,21 +63,35 @@ def getDescProduto(request, cod_produto:int):
     return {"desc_produto" : desc_produto}
 
 @router.get('contratos')
-def getContratos(request):
+def getContratos(request , query ):
     cursor = connection.cursor()
-
-    cursor.execute('''
-                        select 
-                        ek_contrato.seq_contrato,
-                        ek_contrato.cod_pessoa,
-                        ek_pessoa.nome,
-                        ek_contrato.vl_contrato,
-                        substring(replace(ek_contrato.dt_inicio_contrato::text,'-','/') from 0 for 11)::date,
-                        substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date
-                        from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
-                        order by seq_contrato desc
-                   ''')
-    
+    print(query)
+    if not query:
+        cursor.execute('''
+                            select 
+                            ek_contrato.seq_contrato,
+                            ek_contrato.cod_pessoa,
+                            ek_pessoa.nome,
+                            ek_contrato.vl_contrato,
+                            substring(replace(ek_contrato.dt_inicio_contrato::text,'-','/') from 0 for 11)::date,
+                            substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date
+                            from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
+                            order by seq_contrato desc
+                    ''')
+    else:
+        cursor.execute(f'''
+                            select 
+                            ek_contrato.seq_contrato,
+                            ek_contrato.cod_pessoa,
+                            ek_pessoa.nome,
+                            ek_contrato.vl_contrato,
+                            substring(replace(ek_contrato.dt_inicio_contrato::text,'-','/') from 0 for 11)::date,
+                            substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date
+                            from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
+                            where ek_pessoa.nome like '%{query.upper()}%' 
+                            order by seq_contrato desc
+                    ''')
+        
     resContratos = cursor.fetchall()
 
     listContratos = []
@@ -97,9 +111,7 @@ def getContratos(request):
 class Contrato(Schema):
     num_empresa: int = 1
     num_contrato: int = 0
-    vl_contrato: int = 0
-
-
+    totalPriceContract: int = 0
     client: int
     franchise: str
     hours: str
@@ -131,7 +143,7 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
                         insert into ek_contrato(
                             num_empresa, cod_pessoa, vl_contrato, dt_inicio_contrato, dt_fim_contrato, dt_cadastro, status, combustivel, qtd_combustivel, cabos, chave_transf_manual, chave_transf_auto, transporte, instalacao, manutencao, distancia_transporte, franquia, carga_horaria
                         ) values (
-                            1,{data.client},{data.vl_contrato},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodicaa},{data.distancia_transporte},{data.franchise},{data.hours}
+                            1,{data.client},{data.totalPriceContract},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodicaa},{data.distancia_transporte},{data.franchise},{data.hours}
                         ) returning seq_contrato
                    ''')
     seq_contrato = cursor.fetchall()[0][0]
@@ -144,3 +156,15 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
                              seq_contrato, cod_produto, desc_item_contrato, vl_item_contrato, quantidade, unid_medida)
                             VALUES ({seq_contrato}, {item.product}, '{item.descProduct}', {item.unitPrice}, {item.amount}, '{item.unit}');
                        ''')
+
+class Message(Schema):
+    message: str
+
+@router.delete("delete-contract/{seq_contrato}",response={200: Message})
+def delete(request, seq_contrato: int):
+    cursor = connection.cursor()
+
+    cursor.execute(f'delete from ek_contrato_detalhe where seq_contrato = {seq_contrato}')
+    cursor.execute(f'delete from ek_contrato where seq_contrato = {seq_contrato}')
+    return Message(message=f'Contrato {seq_contrato} excluido!')
+    
