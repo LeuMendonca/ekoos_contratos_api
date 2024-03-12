@@ -6,7 +6,7 @@ from typing import List
 import os
 from django.conf import settings
 from django.http import HttpResponse
-from functions.gera_contrato import *
+from funcoes.gera_contrato import *
 
 router = Router()
 
@@ -347,20 +347,21 @@ def fechar(request,seq_contrato):
     else:
         return 404, { "message" : f'Já existem notas para esse contrato!' }
             
-@router.post('generate-invoice/{seq_contrato}',response={200: Message,404:Message})
+@router.post('generate-invoice/{seq_contrato}', response={200: Message,404:Message})
 def gera_nota_remessa(request, seq_contrato:int):
     
     cursor = connection.cursor()
+
     cursor.execute(
         f'''
-            select (case when seq_nota is null then 0
-            else seq_nota
-            end) as "seq_nota"
+            select
+                coalesce(seq_nota,0) as "seq_nota"
             from ek_contrato 
             where seq_contrato = {seq_contrato}
         '''
     )
     seq_nota_remessa = cursor.fetchall()[0][0]
+
     if seq_nota_remessa == 0:
 
         cursor.execute(
@@ -370,166 +371,184 @@ def gera_nota_remessa(request, seq_contrato:int):
                 where numero_contrato = {seq_contrato}
                 '''
                 )
-        pedido = cursor.fetchall()[0]
-        
-        cursor.execute(
-                f'''update ek_configuracao 
-                set num_doc_controle = num_doc_controle + 1  
-                where num_empresa = 1 
-                returning num_doc_controle'''
-                )
-        num_doc_controle = cursor.fetchall()[0][0]
-            
-        cursor.execute(
-        f'''
-        select seq_pessoa_inscricao_estadual 
-        from ek_pessoa_incricao_estadual 
-        where cod_pessoa = {pedido[0]} 
-        and insc_fiscal = 'S' 
-        limit 1
-        '''
-        )
-        seq_pessoa_inscricao_estadual = cursor.fetchall()[0][0]
-        
-        cursor.execute(
-            f'''
-                select estado 
-                from ek_pessoa 
-                where cod_pessoa = {pedido[0]}
-            '''
-        )
-        estado_cliente = cursor.fetchall()[0][0]
-        cursor.execute(
-            f'''select estado from
-                ek_empresa 
-                where num_empresa = 1'''
-        )
-        estado_empresa = cursor.fetchall()[0][0]
-        cfop = 0
-        
-        if int(estado_empresa) == int(estado_cliente):
-            cfop = 5949
-        else:
-            cfop = 6949
-        # AJUSTAR QUANTIDADE E VALOR DO ITEM
-        
-        cursor.execute(f'''select serie_nfe 
-                        from ek_configuracao 
-                        where num_empresa = 1''')
-        serie = cursor.fetchall()[0][0]
-        
-        cursor.execute(
-            f'''
-            insert into ek_nota(
-                num_empresa,
-                ind_oper,   
-                ind_emit,
-                cod_part,
-                cod_mod,
-                ser,
-                num_doc,
-                dt_doc,
-                dt_e_s,
-                vl_doc,
-                vl_merc,
-                cod_mov,
-                dt_cadastro,
-                cfop,
-                cod_sit,
-                desc_complementar,
-                seq_pessoa_inscricao_estadual
-            )values(
-                1,
-                '1',
-                '0',
-                {pedido[0]},
-                '55',
-                '{serie}',
-                {num_doc_controle},
-                '{datetime.now()}',
-                '{datetime.now()}',
-                {pedido[1]},
-                {pedido[1]},
-                '2',
-                '{datetime.now()}',
-                '{cfop}',
-                '00',
-                'Nota fiscal de remessa locacao referente ao contrato {seq_contrato}.',
-                {seq_pessoa_inscricao_estadual}
-                ) returning seq_nota
-                '''
-        )
+        try:
+            pedido = cursor.fetchall()[0]
+        except:
+            return 404,{ 'message' : f'Não existe pedidos para o contrato {seq_contrato}'}
 
-        seq_nota = cursor.fetchall()[0][0]
-
-        cursor.execute(
-            f'''
-                select * 
-                from ek_item_pedido_cli 
-                where seq_pedido_cli in 
-                (select seq_pedido_cli from ek_pedido_cli where numero_contrato = {seq_contrato})
-            '''
-        )
-
-        ek_item_pedido_cli = cursor.fetchall()
+        if pedido:
         
-        
-        seq_item = 0
-        for x in ek_item_pedido_cli:
+            cursor.execute(
+                    f'''update ek_configuracao 
+                    set num_doc_controle = num_doc_controle + 1  
+                    where num_empresa = 1 
+                    returning num_doc_controle'''
+                    )
+            num_doc_controle = cursor.fetchall()[0][0]
+                
             cursor.execute(
             f'''
-            select unid_venda , desc_produto 
-            from ek_produto 
-            where cod_produto = {x[1]}
+            select seq_pessoa_inscricao_estadual 
+            from ek_pessoa_incricao_estadual 
+            where cod_pessoa = {pedido[0]} 
+            and insc_fiscal = 'S' 
+            limit 1
             '''
             )
-            produto = cursor.fetchall()[0]
-        
-            
-            seq_item = seq_item + 1
-            cursor.execute(f'''
-                insert into ek_item_nota (
-                seq_nota,
-                seq_item, 
-                cod_item,
-                quantidade,
-                unidade,
-                vl_item,
-                cst_icms,
-                cfop,
-                dt_cadastro,
-                vl_total_item,
-                desc_item_nota
-                )values(
-                    {seq_nota},
-                    {seq_item},
-                    127,
-                    {x[2]},
-                    '{produto[0]}',
-                    {x[10]},
-                    '090',
-                    '{cfop}',
-                    '{datetime.now()}',
-                    {x[11]},
-                    '{produto[1]}'
-                )
-            ''')
+            seq_pessoa_inscricao_estadual = cursor.fetchall()[0][0]
 
+            cursor.execute('''
+                           select
+                                (case 
+                                    when 
+                                        (select estado from ek_empresa where num_empresa = 1) = (select estado from ek_pessoa where cod_pessoa = 2483)
+                                        then 5949
+                                else 6949 
+                           end)
+                           ''')
+            cfop = cursor.fetchall()[0][0]
+
+            # cursor.execute(
+            #     f'''
+            #         select estado 
+            #         from ek_pessoa 
+            #         where cod_pessoa = {pedido[0]}
+            #     '''
+            # )
+            # estado_cliente = cursor.fetchall()[0][0]
+            # cursor.execute(
+            #     f'''select estado from
+            #         ek_empresa 
+            #         where num_empresa = 1'''
+            # )
+            # estado_empresa = cursor.fetchall()[0][0]
+            # cfop = 0
+            
+            # if int(estado_empresa) == int(estado_cliente):
+            #     cfop = 5949
+            # else:
+            #     cfop = 6949
+            # AJUSTAR QUANTIDADE E VALOR DO ITEM
+            
+            cursor.execute(f'''select serie_nfe 
+                            from ek_configuracao 
+                            where num_empresa = 1''')
+            serie = cursor.fetchall()[0][0]
+            
+            cursor.execute(
+                f'''
+                insert into ek_nota(
+                    num_empresa,
+                    ind_oper,   
+                    ind_emit,
+                    cod_part,
+                    cod_mod,
+                    ser,
+                    num_doc,
+                    dt_doc,
+                    dt_e_s,
+                    vl_doc,
+                    vl_merc,
+                    cod_mov,
+                    dt_cadastro,
+                    cfop,
+                    cod_sit,
+                    desc_complementar,
+                    seq_pessoa_inscricao_estadual
+                )values(
+                    1,
+                    '1',
+                    '0',
+                    {pedido[0]},
+                    '55',
+                    '{serie}',
+                    {num_doc_controle},
+                    '{datetime.now()}',
+                    '{datetime.now()}',
+                    {pedido[1]},
+                    {pedido[1]},
+                    '2',
+                    '{datetime.now()}',
+                    '{cfop}',
+                    '00',
+                    'Nota fiscal de remessa locacao referente ao contrato {seq_contrato}.',
+                    {seq_pessoa_inscricao_estadual}
+                    ) returning seq_nota
+                    '''
+            )
+
+            seq_nota = cursor.fetchall()[0][0]
+
+            cursor.execute(
+                f'''
+                    select * 
+                    from ek_item_pedido_cli 
+                    where seq_pedido_cli in 
+                    (select seq_pedido_cli from ek_pedido_cli where numero_contrato = {seq_contrato})
+                '''
+            )
+
+            ek_item_pedido_cli = cursor.fetchall()
+            
+            
+            seq_item = 0
+            for x in ek_item_pedido_cli:
+                cursor.execute(
+                f'''
+                select unid_venda , desc_produto 
+                from ek_produto 
+                where cod_produto = {x[1]}
+                '''
+                )
+                produto = cursor.fetchall()[0]
+            
+                
+                seq_item = seq_item + 1
+                cursor.execute(f'''
+                    insert into ek_item_nota (
+                    seq_nota,
+                    seq_item, 
+                    cod_item,
+                    quantidade,
+                    unidade,
+                    vl_item,
+                    cst_icms,
+                    cfop,
+                    dt_cadastro,
+                    vl_total_item,
+                    desc_item_nota
+                    )values(
+                        {seq_nota},
+                        {seq_item},
+                        127,
+                        {x[2]},
+                        '{produto[0]}',
+                        {x[10]},
+                        '090',
+                        '{cfop}',
+                        '{datetime.now()}',
+                        {x[11]},
+                        '{produto[1]}'
+                    )
+                ''')
+
+                    
+                
+                cursor.execute(f'''
+                                update ek_item_pedido_cli 
+                                set seq_nota = {seq_nota} 
+                                where seq_pedido_cli in 
+                                (select seq_pedido_cli from ek_pedido_cli where numero_contrato = {seq_contrato})
+                            ''')
                 
             
-            cursor.execute(f'''
-                            update ek_item_pedido_cli 
+            cursor.execute(f'''update ek_contrato 
                             set seq_nota = {seq_nota} 
-                            where seq_pedido_cli in 
-                            (select seq_pedido_cli from ek_pedido_cli where numero_contrato = {seq_contrato})
-                        ''')
+                            where seq_contrato = {seq_contrato}''')
+        
+            return 200,{ 'message' : 'Nota fiscal gerada com sucesso!'}
+        
             
-        
-        cursor.execute(f'''update ek_contrato 
-                        set seq_nota = {seq_nota} 
-                        where seq_contrato = {seq_contrato}''')
-        
-        return 202,{ 'message' : 'Nota fiscal gerada com sucesso!'}
     else:
         return 404 , {'message' :  f'Nota fiscal já foi gerada!!' }
     
@@ -585,7 +604,7 @@ def gera_nota_servico(request,seq_contrato:int):
 @router.get('print-contract/{seq_contrato}')
 def gerador_contrato(request,seq_contrato):
     
-    caminho ="C:/ekoos_contratos_api/midia/Contrato-"+ str(seq_contrato) + '.pdf'
+    caminho ="c:/Projetos/ekoos_contratos_api/midia/Contrato-"+ str(seq_contrato) + '.pdf'
     caminho = os.path.join(settings.MEDIA_ROOT,caminho)
 
     gera_contrato(caminho,seq_contrato,connection)

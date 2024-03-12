@@ -192,7 +192,7 @@ def gera_contrato(caminho,seq_contrato,conexao):
         cnv.setTitle(f'Contrato {contrato[0]}')
 
 
-        cnv.drawImage("C:/ekoos_contratos_api/functions/cabeçalho.jpeg",30,730,width=550)
+        cnv.drawImage("C:/projetos/ekoos_contratos_api/funcoes/cabeçalho.jpeg",30,730,width=550)
 
 
         cnv.setFontSize(15)
@@ -244,13 +244,13 @@ def gera_contrato(caminho,seq_contrato,conexao):
         #inicio_linha -= 50
 
         if len(lista_produtos) < 9:
-            cnv.drawImage(R"C:/ekoos_contratos_api/functions/footer.jpeg",10,0)
+            cnv.drawImage(R"C:/projetos/ekoos_contratos_api/funcoes/footer.jpeg",10,0)
 
         cnv.showPage()
 
 
     
-        cnv.drawImage("C:/ekoos_contratos_api/functions/cabeçalho.jpeg",30,710,width=550)
+        cnv.drawImage("C:/projetos/ekoos_contratos_api/funcoes/cabeçalho.jpeg",30,710,width=550)
         
         condicoes = [11,13,14,15,16,17,18]
         descricao_condicao = ['combustível','cabos','chave transferência manual','chave transferência automática','transporte','instalação','manutenção']
@@ -285,13 +285,13 @@ def gera_contrato(caminho,seq_contrato,conexao):
         p.drawOn(cnv,35,150)
 
 
-        cnv.drawImage(R"C:/ekoos_contratos_api/functions/footer.jpeg",10,0)
+        cnv.drawImage(R"C:/projetos/ekoos_contratos_api/funcoes/footer.jpeg",10,0)
 
 
         cnv.showPage()
 
     
-        cnv.drawImage("C:/ekoos_contratos_api/functions/cabeçalho.jpeg",30,710,width=550)
+        cnv.drawImage("C:/projetos/ekoos_contratos_api/funcoes/cabeçalho.jpeg",30,710,width=550)
 
         datainicial = str(contrato[5])
         datafinal = str(contrato[6])
@@ -315,13 +315,13 @@ def gera_contrato(caminho,seq_contrato,conexao):
         p.wrapOn(cnv,500,25)
         p.drawOn(cnv,35,80)
 
-        cnv.drawImage(R"C:/ekoos_contratos_api/functions/footer.jpeg",10,0)
+        cnv.drawImage(R"C:/projetos/ekoos_contratos_api/funcoes/footer.jpeg",10,0)
 
         cnv.showPage()
 
 
     
-        cnv.drawImage("C:/ekoos_contratos_api/functions/cabeçalho.jpeg",30,710,width=550)
+        cnv.drawImage("C:/projetos/ekoos_contratos_api/funcoes/cabeçalho.jpeg",30,710,width=550)
 
         p = Paragraph(
             '''6.2.	A locadora suspenderá quaisquer assistência técnica rente a locatária referente ao item locado ao poder da mesma, quando houver fatura em atraso, sem desconto referente aos dias de não funcionamento do equipamento locado.<br/><br/>
@@ -341,12 +341,12 @@ def gera_contrato(caminho,seq_contrato,conexao):
         p.wrapOn(cnv,500,25)
         p.drawOn(cnv,35,120)
 
-        cnv.drawImage(R"C:/ekoos_contratos_api/functions/footer.jpeg",10,0)
+        cnv.drawImage(R"C:/projetos/ekoos_contratos_api/funcoes/footer.jpeg",10,0)
 
         cnv.showPage()
 
     
-        cnv.drawImage("C:/ekoos_contratos_api/functions/cabeçalho.jpeg",30,710,width=550)
+        cnv.drawImage("C:/projetos/ekoos_contratos_api/funcoes/cabeçalho.jpeg",30,710,width=550)
 
         p = Paragraph(
             '''
@@ -369,13 +369,13 @@ def gera_contrato(caminho,seq_contrato,conexao):
         p.wrapOn(cnv,500,25)
         p.drawOn(cnv,35,120)
 
-        cnv.drawImage(R"C:/ekoos_contratos_api/functions/footer.jpeg",10,0)
+        cnv.drawImage(R"C:/projetos/ekoos_contratos_api/funcoes/footer.jpeg",10,0)
 
         cnv.showPage()
 
 
     
-        cnv.drawImage("C:/ekoos_contratos_api/functions/cabeçalho.jpeg",30,710,width=550)
+        cnv.drawImage("C:/projetos/ekoos_contratos_api/funcoes/cabeçalho.jpeg",30,710,width=550)
 
         p = Paragraph(
             '''
@@ -395,7 +395,7 @@ def gera_contrato(caminho,seq_contrato,conexao):
         
         
         cnv.drawCentredString(290,430,f"Luis Eduardo Magalhães – BA, {data_hoje[8:11]} de {data(data_hoje[5:7])} de {data_hoje[:4]}")
-        cnv.drawImage(R"C:/ekoos_contratos_api/functions/footer.jpeg",10,0)
+        cnv.drawImage(R"C:/projetos/ekoos_contratos_api/funcoes/footer.jpeg",10,0)
 
         cnv.line(50,365,220,365)
 
@@ -404,7 +404,7 @@ def gera_contrato(caminho,seq_contrato,conexao):
         cnv.drawString(100,350,"LOCATÁRIA")
         cnv.drawString(430,350,"LOCADORA")
 
-        #cnv.drawImage(r"C:/ekoos_contratos_api/functions/footer.jpeg",10,0)
+        #cnv.drawImage(r"C:/projetos/ekoos_contratos_api/funcoes/footer.jpeg",10,0)
         cnv.save()
 
     gera_contrato_sub(seq_contrato=seq_contrato)
