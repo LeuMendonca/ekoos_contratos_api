@@ -2,6 +2,7 @@ from ninja import Router , Schema
 from django.db import connection
 from datetime import datetime
 from typing import List
+import json
 
 import os
 from django.conf import settings
@@ -68,11 +69,14 @@ def getDescProduto(request, cod_produto:int):
     return {"desc_produto" : desc_produto}
 
 @router.get('contratos')
-def getContratos(request , query ):
+def getContratos(request , query = '' , offset = 0):
     cursor = connection.cursor()
-    print(query)
+    
+    resContratos = None
+    paginacaoContratos = None
+
     if not query:
-        cursor.execute('''
+        cursor.execute(f'''
                             select 
                             ek_contrato.seq_contrato,
                             ek_contrato.cod_pessoa,
@@ -83,23 +87,49 @@ def getContratos(request , query ):
                             from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
                             where ek_contrato.status = 'A'
                             order by seq_contrato desc
+                            limit 10
+                            offset {offset}
                     ''')
+        resContratos = cursor.fetchall()
+        
+        cursor.execute('''
+                        select 
+                        count(*) as "Total Contratos",
+                        ceiling(count(*)::double precision/10) as "Quantia de paginas"
+                        from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
+                        where ek_contrato.status = 'A'
+                       ''')
+        paginacaoContratos = cursor.fetchall()
+        # where ek_contrato.status = 'A'
     else:
         cursor.execute(f'''
                             select 
-                            ek_contrato.seq_contrato,
-                            ek_contrato.cod_pessoa,
-                            ek_pessoa.nome,
-                            ek_contrato.vl_contrato,
-                            substring(replace(ek_contrato.dt_inicio_contrato::text,'-','/') from 0 for 11)::date,
-                            substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date
+                                ek_contrato.seq_contrato,
+                                ek_contrato.cod_pessoa,
+                                ek_pessoa.nome,
+                                ek_contrato.vl_contrato,
+                                substring(replace(ek_contrato.dt_inicio_contrato::text,'-','/') from 0 for 11)::date,
+                                substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date
                             from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
-                            where ek_pessoa.nome like '%{query.upper()}%' and ek_contrato.status = 'A'
+                            where 
+                                ek_pessoa.nome like '%{query.upper()}%' 
+                                and ek_contrato.status = 'A'
                             order by seq_contrato desc
+                            limit 10
+                            offset {offset}
                     ''')
+        resContratos = cursor.fetchall()
         
-    resContratos = cursor.fetchall()
-
+        cursor.execute(f"""
+                    select 
+                    count(*) as "Total Contratos",
+                    ceiling(count(*)::double precision/10) as "Quantia de paginas"
+                    from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
+                    where ek_pessoa.nome like '%{query.upper()}%' 
+                    and ek_contrato.status = 'A'
+                   """)
+        paginacaoContratos = cursor.fetchall()
+        
     listContratos = []
 
     for contrato in resContratos:
@@ -111,10 +141,82 @@ def getContratos(request , query ):
             'dateStart' : datetime.strftime(contrato[4] , "%d/%m/%Y"),
             'dateEnd' : datetime.strftime(contrato[5] , "%d/%m/%Y"),
         })
+
+    jsonContratos = {
+        'listContratos': listContratos,
+        'paginationContracts': {
+            'totalContracts' : paginacaoContratos[0][0],
+            'totalPages' : paginacaoContratos[0][1]
+        }
+    }
     
+    jsonContratos = json.dumps(jsonContratos)
     
+    return  jsonContratos
+
+@router.get('get-contract-id/{seq_contrato}')
+def getContrctID(request,seq_contrato:int):
+    def separaContract(lista):
+        return {
+            'seq_contrato' : lista[0], 
+            'cod_pessoa' : lista[1], 
+            'vl_contrato' : lista[2], 
+            'dt_inicio_contrato' : lista[3], 
+            'dt_fim_contrato' : lista[4], 
+            'dt_cadastro' : lista[5], 
+            'franquia' : lista[6], 
+            'carga_horaria' : lista[7], 
+            'transporte' : lista[8], 
+            'combustivel' : lista[9], 
+            'chave_transf_manual' : lista[10], 
+            'chave_transf_auto' : lista[11], 
+            'instalacao' : lista[12], 
+            'manutencao' : lista[13], 
+            'cabos' : lista[14]
+        }
+
+    def separaDetalhes(lista):
+        return {
+            'seq_contrato_detalhe' : lista[0],
+            'seq_contrato' : lista[1],
+            'product' : lista[2],
+            'descProduct' : lista[3],
+            'unitPrice' : lista[4],
+            'amount' : lista[5],
+            'unit' : lista[6],
+        }
+
+    cursor = connection.cursor()
+
+    cursor.execute(f'''
+                    select 
+                        seq_contrato, cod_pessoa,vl_contrato, 
+                        dt_inicio_contrato, dt_fim_contrato, dt_cadastro,  
+                        franquia, carga_horaria, 
+                        transporte, combustivel, chave_transf_manual, 
+                        chave_transf_auto, instalacao, manutencao, cabos
+                    from ek_contrato
+                    where seq_contrato = {seq_contrato}
+                ''')
+    contractID = cursor.fetchall()
+    contractID = list(map(separaContract , contractID))
+
+    cursor.execute(f'''
+                        select seq_contrato_detalhe, seq_contrato, cod_produto, desc_item_contrato, 
+                            vl_item_contrato, quantidade, unid_medida
+                        from ek_contrato_detalhe
+                        where seq_contrato = {seq_contrato}
+                   ''')
+    contractIDDetalhes = cursor.fetchall()
+    contractIDDetalhes = list(map(separaDetalhes , contractIDDetalhes))
     
-    return listContratos
+
+    
+    return {
+        'contract': contractID[0],
+        'contractDetails': contractIDDetalhes
+    }
+# ----------------------------------------------------------------------------------------------------------------
 
 class Contrato(Schema):
     num_empresa: int = 1
