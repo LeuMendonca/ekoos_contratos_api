@@ -11,6 +11,10 @@ from funcoes.gera_contrato import *
 
 router = Router()
 
+# Schema para mensagem de erro do response.
+class Message(Schema):
+    message: str
+
 @router.get('clientes')
 def getClientes(request):
     cursor = connection.cursor()
@@ -177,6 +181,7 @@ def getContrctID(request,seq_contrato:int):
     def separaDetalhes(lista):
         return {
             'id' : lista[0],
+            'seq_contrato_detalhe' : lista[1],
             'product' : lista[3],
             'descProduct' : lista[4],
             'unitPrice' : lista[5],
@@ -367,10 +372,34 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
                     ''')
         start += 1         
 
+@router.put('update-contract/{seq_contrato}')
+def updateContract(request ,seq_contrato:int , data): #,data: Contrato , seq_contrato:int
+    print('chegou aqui ' , seq_contrato)
+    print(data)
+    # cursor = connection.cursor()
+
+    # cursor.execute(f'''
+    #             UPDATE ek_contrato
+    #                 SET cod_pessoa = { data.client },  
+    #                     vl_contrato = { data.totalPriceContract},
+    #                     dt_inicio_contrato = { data.initialDate } , 
+    #                     dt_fim_contrato = { data.finalDate }, 
+    #                     franquia = { data.franchise } , 
+    #                     carga_horaria = { data.hours },                        
+    #                     transporte = { data.transporte }, 
+    #                     combustivel = { data.combustivel }, 
+    #                     chave_transf_manual = { data.chvTransManual }, 
+    #                     chave_transf_auto = { data.chvTransAuto }, 
+    #                     instalacao = { data.instalacao }, 
+    #                     manutencao = { data.manutencaoPeriodicaa }, 
+    #                     cabos = { data.cabos }
+    #                 WHERE seq_contrato = { seq_contrato };
+    #             ''')
+    return 'djasijdsia'
+    
 
 
-class Message(Schema):
-    message: str
+
 
 @router.delete("delete-contract/{seq_contrato}",response={200: Message , 404: Message})
 def delete(request, seq_contrato: int):
