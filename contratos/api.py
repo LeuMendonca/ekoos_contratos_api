@@ -159,42 +159,49 @@ def getContrctID(request,seq_contrato:int):
     def separaContract(lista):
         return {
             'seq_contrato' : lista[0], 
-            'cod_pessoa' : lista[1], 
-            'vl_contrato' : lista[2], 
-            'dt_inicio_contrato' : lista[3], 
-            'dt_fim_contrato' : lista[4], 
-            'dt_cadastro' : lista[5], 
-            'franquia' : lista[6], 
-            'carga_horaria' : lista[7], 
-            'transporte' : lista[8], 
-            'combustivel' : lista[9], 
-            'chave_transf_manual' : lista[10], 
-            'chave_transf_auto' : lista[11], 
-            'instalacao' : lista[12], 
-            'manutencao' : lista[13], 
-            'cabos' : lista[14]
+            'client' : lista[1], 
+            'totalPriceContract' : lista[2], 
+            'initialDate' : lista[3], 
+            'finalDate' : lista[4], 
+            'franchise' : str(lista[5]), 
+            'hours' : str(lista[6]), 
+            'transporte' : lista[7], 
+            'combustivel' : lista[8], 
+            'chvTransManual' : lista[9], 
+            'chvTransAuto' : lista[10], 
+            'instalacao' : lista[11], 
+            'manutencaoPeriodicaa' : lista[12], 
+            'cabos' : lista[13]
         }
 
     def separaDetalhes(lista):
         return {
-            'seq_contrato_detalhe' : lista[0],
-            'seq_contrato' : lista[1],
-            'product' : lista[2],
-            'descProduct' : lista[3],
-            'unitPrice' : lista[4],
-            'amount' : lista[5],
-            'unit' : lista[6],
+            'id' : lista[0],
+            'product' : lista[3],
+            'descProduct' : lista[4],
+            'unitPrice' : lista[5],
+            'amount' : lista[6],
+            'unit' : lista[7],
         }
 
     cursor = connection.cursor()
 
     cursor.execute(f'''
                     select 
-                        seq_contrato, cod_pessoa,vl_contrato, 
-                        dt_inicio_contrato, dt_fim_contrato, dt_cadastro,  
-                        franquia, carga_horaria, 
-                        transporte, combustivel, chave_transf_manual, 
-                        chave_transf_auto, instalacao, manutencao, cabos
+                        seq_contrato, 
+                        cod_pessoa,
+                        vl_contrato, 
+                        dt_inicio_contrato::date, 
+                        dt_fim_contrato::date, 
+                        franquia, 
+                        carga_horaria, 
+                        transporte, 
+                        combustivel, 
+                        chave_transf_manual, 
+                        chave_transf_auto, 
+                        instalacao, 
+                        manutencao, 
+                        cabos
                     from ek_contrato
                     where seq_contrato = {seq_contrato}
                 ''')
@@ -202,10 +209,17 @@ def getContrctID(request,seq_contrato:int):
     contractID = list(map(separaContract , contractID))
 
     cursor.execute(f'''
-                        select seq_contrato_detalhe, seq_contrato, cod_produto, desc_item_contrato, 
-                            vl_item_contrato, quantidade, unid_medida
-                        from ek_contrato_detalhe
-                        where seq_contrato = {seq_contrato}
+                    select 
+                        ROW_NUMBER() OVER () AS id,
+                        seq_contrato_detalhe, 
+                        seq_contrato, 
+                        cod_produto, 
+                        desc_item_contrato, 
+                        vl_item_contrato, 
+                        quantidade, 
+                        unid_medida
+                    from ek_contrato_detalhe
+                    where seq_contrato = {seq_contrato}
                    ''')
     contractIDDetalhes = cursor.fetchall()
     contractIDDetalhes = list(map(separaDetalhes , contractIDDetalhes))
