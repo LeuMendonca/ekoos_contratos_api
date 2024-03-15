@@ -174,7 +174,7 @@ def getContrctID(request,seq_contrato:int):
             'chvTransManual' : lista[9], 
             'chvTransAuto' : lista[10], 
             'instalacao' : lista[11], 
-            'manutencaoPeriodicaa' : lista[12], 
+            'manutencaoPeriodica' : lista[12], 
             'cabos' : lista[13]
         }
 
@@ -236,33 +236,42 @@ def getContrctID(request,seq_contrato:int):
         'contractDetails': contractIDDetalhes
     }
 # ----------------------------------------------------------------------------------------------------------------
+class Itens(Schema):
+    id: int = 0
+    seq_contrato: int = 0
+    seq_contrato_detalhe: int = 0
+    product: int
+    descProduct: str 
+    unitPrice: float
+    amount: int
+    unit: str
 
 class Contrato(Schema):
     num_empresa: int = 1
     num_contrato: int = 0
     totalPriceContract: int = 0
-    client: int
-    franchise: str
-    hours: str
-    initialDate: str
-    finalDate: str
+    client: int 
+    franchise: str 
+    hours: str 
+    initialDate: str 
+    finalDate: str 
     cabos: bool = False
     chvTransAuto: bool = False
     chvTransManual: bool = False
     combustivel: bool = False
     qtd_combustivel: float = 0
     instalacao: bool = False
-    manutencaoPeriodicaa: bool = False
+    manutencaoPeriodica: bool = False
     transporte: bool = False
     distancia_transporte: float = 0
+    # listItems: List[Itens]
 
-class Itens(Schema):
-    seq_contrato: int = 0
-    product: int
-    descProduct: str 
-    unitPrice: float
-    amount: int
-    unit: str
+    
+
+
+
+
+
 
 @router.post('new-contract')
 def newContract( request ,data: Contrato , listItems: List[Itens] ):
@@ -272,7 +281,7 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
                         insert into ek_contrato(
                             num_empresa, cod_pessoa, vl_contrato, dt_inicio_contrato, dt_fim_contrato, dt_cadastro, status, combustivel, qtd_combustivel, cabos, chave_transf_manual, chave_transf_auto, transporte, instalacao, manutencao, distancia_transporte, franquia, carga_horaria
                         ) values (
-                            1,{data.client},{data.totalPriceContract},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodicaa},{data.distancia_transporte},{data.franchise},{data.hours}
+                            1,{data.client},{data.totalPriceContract},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodica},{data.distancia_transporte},{data.franchise},{data.hours}
                         ) returning seq_contrato
                    ''')
     seq_contrato = cursor.fetchall()[0][0]
@@ -373,32 +382,29 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
         start += 1         
 
 @router.put('update-contract/{seq_contrato}')
-def updateContract(request ,seq_contrato:int , data): #,data: Contrato , seq_contrato:int
-    print('chegou aqui ' , seq_contrato)
-    print(data)
-    # cursor = connection.cursor()
-
-    # cursor.execute(f'''
-    #             UPDATE ek_contrato
-    #                 SET cod_pessoa = { data.client },  
-    #                     vl_contrato = { data.totalPriceContract},
-    #                     dt_inicio_contrato = { data.initialDate } , 
-    #                     dt_fim_contrato = { data.finalDate }, 
-    #                     franquia = { data.franchise } , 
-    #                     carga_horaria = { data.hours },                        
-    #                     transporte = { data.transporte }, 
-    #                     combustivel = { data.combustivel }, 
-    #                     chave_transf_manual = { data.chvTransManual }, 
-    #                     chave_transf_auto = { data.chvTransAuto }, 
-    #                     instalacao = { data.instalacao }, 
-    #                     manutencao = { data.manutencaoPeriodicaa }, 
-    #                     cabos = { data.cabos }
-    #                 WHERE seq_contrato = { seq_contrato };
-    #             ''')
-    return 'djasijdsia'
+def updateContract( request , seq_contrato:int ,data: Contrato ):
     
+    cursor = connection.cursor()
 
-
+    cursor.execute(f'''
+                UPDATE ek_contrato
+                    SET cod_pessoa = { data.client },  
+                        vl_contrato = { data.totalPriceContract},
+                        dt_inicio_contrato = '{ data.initialDate }' , 
+                        dt_fim_contrato = '{ data.finalDate }', 
+                        franquia = { data.franchise } , 
+                        carga_horaria = { data.hours },                        
+                        transporte = { data.transporte }, 
+                        combustivel = { data.combustivel }, 
+                        chave_transf_manual = { data.chvTransManual }, 
+                        chave_transf_auto = { data.chvTransAuto }, 
+                        instalacao = { data.instalacao }, 
+                        manutencao = { data.manutencaoPeriodica }, 
+                        cabos = { data.cabos }
+                    WHERE seq_contrato = { seq_contrato };
+                ''')
+    cursor.commit()
+       
 
 
 @router.delete("delete-contract/{seq_contrato}",response={200: Message , 404: Message})

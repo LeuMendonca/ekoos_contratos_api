@@ -78,12 +78,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "leonardo_minasbahia_23102023",
-        # "NAME": "ekoos",
+        # "NAME": "leonardo_minasbahia_23102023",
+        "NAME": "ekoos",
         "USER": "postgres",
         "PASSWORD": "postgres",
-        "HOST": "192.168.15.7",
-        # "HOST": "localhost",
+        # "HOST": "192.168.15.7",
+        "HOST": "localhost",
         "PORT": "5432",
     }
 }
@@ -113,7 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = 'American/Sao_Paulo'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
