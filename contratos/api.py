@@ -266,12 +266,6 @@ class Contrato(Schema):
     distancia_transporte: float = 0
     # listItems: List[Itens]
 
-    
-
-
-
-
-
 
 @router.post('new-contract')
 def newContract( request ,data: Contrato , listItems: List[Itens] ):
@@ -381,30 +375,61 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
                     ''')
         start += 1         
 
-@router.put('update-contract/{seq_contrato}')
-def updateContract( request , seq_contrato:int ,data: Contrato ):
+@router.put('update-contract/{seq_contrato}' , response={200: Message , 404: Message })
+def updateContract( request , seq_contrato:int ,data: Contrato , itens: List[Itens]):
     
     cursor = connection.cursor()
+    try:
+        cursor.execute(f'''
+                    UPDATE ek_contrato
+                        SET cod_pessoa = { data.client },  
+                            vl_contrato = { data.totalPriceContract},
+                            dt_inicio_contrato = '{ data.initialDate }' , 
+                            dt_fim_contrato = '{ data.finalDate }', 
+                            franquia = { data.franchise } , 
+                            carga_horaria = { data.hours },                        
+                            transporte = { data.transporte }, 
+                            combustivel = { data.combustivel }, 
+                            chave_transf_manual = { data.chvTransManual }, 
+                            chave_transf_auto = { data.chvTransAuto }, 
+                            instalacao = { data.instalacao }, 
+                            manutencao = { data.manutencaoPeriodica }, 
+                            cabos = { data.cabos }
+                        WHERE seq_contrato = { seq_contrato };
+                    ''')
 
-    cursor.execute(f'''
-                UPDATE ek_contrato
-                    SET cod_pessoa = { data.client },  
-                        vl_contrato = { data.totalPriceContract},
-                        dt_inicio_contrato = '{ data.initialDate }' , 
-                        dt_fim_contrato = '{ data.finalDate }', 
-                        franquia = { data.franchise } , 
-                        carga_horaria = { data.hours },                        
-                        transporte = { data.transporte }, 
-                        combustivel = { data.combustivel }, 
-                        chave_transf_manual = { data.chvTransManual }, 
-                        chave_transf_auto = { data.chvTransAuto }, 
-                        instalacao = { data.instalacao }, 
-                        manutencao = { data.manutencaoPeriodica }, 
-                        cabos = { data.cabos }
-                    WHERE seq_contrato = { seq_contrato };
-                ''')
-    cursor.commit()
-       
+        cursor.execute(f'''
+                        select seq_contrato_detalhe from ek_contrato_detalhe where seq_contrato = {seq_contrato}
+                    ''')
+        resContratoDetalhe = cursor.fetchall()
+        resContratoDetalhe = list(map(lambda x: x[0] , resContratoDetalhe))
+
+        for item in itens:
+                if item.seq_contrato_detalhe in resContratoDetalhe:
+                    cursor.execute(f'''
+                                    UPDATE ek_contrato_detalhe
+                                    SET
+                                        cod_produto = {item.product}, 
+                                        desc_item_contrato = '{item.descProduct}', 
+                                        vl_item_contrato = {item.unitPrice}, 
+                                        quantidade = {item.amount} , 
+                                        unid_medida =  '{item.unit}'
+                                    WHERE seq_contrato = {seq_contrato} and seq_contrato_detalhe = {item.seq_contrato_detalhe};
+                                    ''')
+                    resContratoDetalhe.remove(item.seq_contrato_detalhe)
+                else:
+                    cursor.execute(f'''
+                            INSERT INTO public.ek_contrato_detalhe(
+                                    seq_contrato, cod_produto, desc_item_contrato, vl_item_contrato, quantidade, unid_medida)
+                                    VALUES ({seq_contrato}, {item.product}, '{item.descProduct}', {item.unitPrice}, {item.amount}, '{item.unit}');
+                            ''')
+        if resContratoDetalhe:
+            cursor.execute(f"delete from ek_contrato_detalhe where seq_contrato_detalhe in ( {','.join(map(str , resContratoDetalhe))} )")
+        return 200 , { 'message' : f'Contrato {seq_contrato} atualizado!'}
+    except:
+        return 404, { 'message' : 'Não foi possivel atualizar o contrato'}
+        
+
 
 
 @router.delete("delete-contract/{seq_contrato}",response={200: Message , 404: Message})
