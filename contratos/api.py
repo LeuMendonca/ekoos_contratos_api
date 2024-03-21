@@ -267,118 +267,134 @@ class Contrato(Schema):
     # listItems: List[Itens]
 
 
-@router.post('new-contract')
+@router.post('new-contract',response={200:Message , 404:Message})
 def newContract( request ,data: Contrato , listItems: List[Itens] ):
     cursor = connection.cursor()
 
-    cursor.execute(f'''
-                        insert into ek_contrato(
-                            num_empresa, cod_pessoa, vl_contrato, dt_inicio_contrato, dt_fim_contrato, dt_cadastro, status, combustivel, qtd_combustivel, cabos, chave_transf_manual, chave_transf_auto, transporte, instalacao, manutencao, distancia_transporte, franquia, carga_horaria
-                        ) values (
-                            1,{data.client},{data.totalPriceContract},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodica},{data.distancia_transporte},{data.franchise},{data.hours}
-                        ) returning seq_contrato
-                   ''')
-    seq_contrato = cursor.fetchall()[0][0]
+    if datetime.fromisoformat(data.initialDate) > datetime.fromisoformat(data.finalDate):
+        return 404 , {"message" : "Data inicial é maior que a data final"}
 
-    for item in listItems:
+    try:
+        cursor.execute(f'''
+                            insert into ek_contrato(
+                                num_empresa, cod_pessoa, vl_contrato, dt_inicio_contrato, dt_fim_contrato, dt_cadastro, status, combustivel, qtd_combustivel, cabos,chave_transf_manual, chave_transf_auto, transporte, instalacao, manutencao, distancia_transporte, franquia, carga_horaria
+                            ) values (
+                                1,{data.client},{data.totalPriceContract},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodica},{data.distancia_transporte},{data.franchise},{data.hours}
+                            ) returning seq_contrato
+                    ''')
+        seq_contrato = cursor.fetchall()[0][0]
+
+        for item in listItems:
+
+            cursor.execute(f'''
+                        INSERT INTO public.ek_contrato_detalhe(
+                                seq_contrato, cod_produto, desc_item_contrato, vl_item_contrato, quantidade, unid_medida)
+                                VALUES ({seq_contrato}, {item.product}, '{item.descProduct}', {item.unitPrice}, {item.amount}, '{item.unit}');
+                        ''')
+            
+
+        cursor.execute(
+                    f'''
+                        insert into ek_pedido_Cli(
+                            dt_pedido,
+                            flag_status,
+                            vl_total_pedido,
+                            cod_pessoa,
+                            tipo_pedido,
+                            dt_cadastro,
+                            num_empresa,
+                            obs_pedido,
+                            numero_contrato
+                        )values(
+                            '{datetime.now()}',
+                            'F',
+                            {data.totalPriceContract},
+                            {data.client},
+                            'P',
+                            '{datetime.now()}',
+                            1,
+                            'Pedido gerado através do contrato',
+                            {seq_contrato}
+                        )
+                    '''
+                )
 
         cursor.execute(f'''
-                       INSERT INTO public.ek_contrato_detalhe(
-                             seq_contrato, cod_produto, desc_item_contrato, vl_item_contrato, quantidade, unid_medida)
-                            VALUES ({seq_contrato}, {item.product}, '{item.descProduct}', {item.unitPrice}, {item.amount}, '{item.unit}');
-                       ''')
+                            select dt_inicio_contrato , dt_fim_contrato 
+                            from ek_contrato 
+                            where seq_contrato = {seq_contrato}
+                        ''')
+        data = cursor.fetchall()[0]
+        dias_contrato = abs((data[1] - data[0]).days)
         
+        
+        cursor.execute(f'select max(seq_item_pedido) from ek_item_pedido_cli')
+        max_seq_item_pedido = cursor.fetchall()[0][0]
+        
+        cursor.execute(f'''select seq_pedido_cli 
+                        from ek_pedido_cli 
+                        where numero_contrato = {seq_contrato}''')
+        seq_pedido_cli = cursor.fetchall()[0][0]
 
-    cursor.execute(
-                f'''
-                    insert into ek_pedido_Cli(
-                        dt_pedido,
-                        flag_status,
-                        vl_total_pedido,
-                        cod_pessoa,
-                        tipo_pedido,
-                        dt_cadastro,
-                        num_empresa,
-                        obs_pedido,
-                        numero_contrato
-                    )values(
-                        '{datetime.now()}',
-                        'F',
-                        {data.totalPriceContract},
-                        {data.client},
-                        'P',
-                        '{datetime.now()}',
-                        1,
-                        'Pedido gerado através do contrato',
-                        {seq_contrato}
-                    )
-                '''
-            )
+    except:
+        return 404,{"message" : "Houve um problema ao gravar a capa do contrato."}
 
-    cursor.execute(f'''
-                        select dt_inicio_contrato , dt_fim_contrato 
-                        from ek_contrato 
-                        where seq_contrato = {seq_contrato}
-                    ''')
-    data = cursor.fetchall()[0]
-    dias_contrato = abs((data[1] - data[0]).days)
-    
-    
-    cursor.execute(f'select max(seq_item_pedido) from ek_item_pedido_cli')
-    max_seq_item_pedido = cursor.fetchall()[0][0]
-    
-    cursor.execute(f'''select seq_pedido_cli 
-                    from ek_pedido_cli 
-                    where numero_contrato = {seq_contrato}''')
-    seq_pedido_cli = cursor.fetchall()[0][0]
-
-    cursor.execute(f'''select * from 
+    try:
+        cursor.execute(f'''select * from 
                         ek_contrato_detalhe 
                         where seq_contrato = {seq_contrato}
                     ''')
-    resDetalheContrato = cursor.fetchall()
+        resDetalheContrato = cursor.fetchall()
 
-    start = 1
+        start = 1
 
-    for res in resDetalheContrato:
-        max_seq_item_pedido += 1
-        cursor.execute(f'''select desc_produto 
-                            from ek_produto 
-                            where cod_produto = {res[2]}''')
-        desc = cursor.fetchall()[0]
-        
-        cursor.execute(f'''insert into ek_item_pedido_cli(
-                        seq_pedido_cli,
-                        cod_item,
-                        qtd_pedido,
-                        qtd_atendido,
-                        vl_unitario,
-                        vl_total_item,
-                        dt_cadastro,
-                        seq_item_pedido,
-                        status_item,
-                        sequencia_item,
-                        desc_item
-                    )values(
-                        {seq_pedido_cli},
-                        {res[2]},
-                        1,
-                        1,
-                        {res[4] * res[5]},
-                        {res[4] * res[5]},
-                        '{datetime.now()}',
-                        {max_seq_item_pedido},
-                        'F',
-                        {start},
-                        'Locacao produto {res[2]} - {desc[0]} - {dias_contrato} dias - Valor Total: {dias_contrato * res[4]}'
-                    )
-                    ''')
-        start += 1         
+        for res in resDetalheContrato:
+            max_seq_item_pedido += 1
+            cursor.execute(f'''select desc_produto 
+                                from ek_produto 
+                                where cod_produto = {res[2]}''')
+            desc = cursor.fetchall()[0]
+            
+            cursor.execute(f'''insert into ek_item_pedido_cli(
+                            seq_pedido_cli,
+                            cod_item,
+                            qtd_pedido,
+                            qtd_atendido,
+                            vl_unitario,
+                            vl_total_item,
+                            dt_cadastro,
+                            seq_item_pedido,
+                            status_item,
+                            sequencia_item,
+                            desc_item
+                        )values(
+                            {seq_pedido_cli},
+                            {res[2]},
+                            1,
+                            1,
+                            {res[4] * res[5]},
+                            {res[4] * res[5]},
+                            '{datetime.now()}',
+                            {max_seq_item_pedido},
+                            'F',
+                            {start},
+                            'Locacao produto {res[2]} - {desc[0]} - {dias_contrato} dias - Valor Total: {dias_contrato * res[4]}'
+                        )
+                        ''')
+            start += 1    
+
+            return 200 , {"message" : f"Contrato {seq_contrato} cadastrado com sucesso!"}     
+    except:
+        return 404,{"message" : "Houve um problema ao gravar os itens dos contrato."}
 
 @router.put('update-contract/{seq_contrato}' , response={200: Message , 404: Message })
 def updateContract( request , seq_contrato:int ,data: Contrato , itens: List[Itens]):
     
     cursor = connection.cursor()
+
+    if datetime.fromisoformat(data.initialDate) > datetime.fromisoformat(data.finalDate):
+        return 404 , {"message" : "Data inicial é maior que a data final"}
+
     try:
         cursor.execute(f'''
                     UPDATE ek_contrato

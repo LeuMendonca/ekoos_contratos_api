@@ -1,3 +1,7 @@
-x = [ 1 , 2, 3 , 4 , 5]
+from datetime import datetime
 
-print(f"A lista e {', '.join(map(str , x))}")
+ = datetime.fromisoformat("2024-03-31")
+ = datetime.fromisoformat("2024-03-05")
+
+if x > y:
+    print("e maior")
