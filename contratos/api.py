@@ -15,6 +15,42 @@ router = Router()
 class Message(Schema):
     message: str
 
+
+@router.get('auth',response={200:Message , 404:Message})
+def Authentication(request , user , password , company):
+    cursor = connection.cursor()
+
+    cursor.execute(f"select nome_usuario, cod_usuario from ek_usuario where nome_usuario = '{user}' and senha = '{password}'")
+    userLogin = cursor.fetchall()
+
+    if userLogin:
+        dataUserLogin = {
+            "name": userLogin[0][0],
+            "codUser": userLogin[0][1],
+            "company": company,
+        }
+
+        return 200, {"message" : "Login realizado!" , 'data': dataUserLogin}
+    else:
+        return 404, {"message" : "Usuário inexistente!"}
+        
+        
+@router.get('empresas')
+def getEmpresas(request):
+    cursor = connection.cursor()
+
+    cursor.execute('select num_empresa::varchar , nome_empresa from ek_empresa order by num_empresa')
+    resEmpresa = cursor.fetchall()
+
+    listEmpresa = []
+
+    for empresa in resEmpresa:
+        listEmpresa.append({
+            'value' : empresa[0],
+            'label' : empresa[1] 
+        })
+    return listEmpresa
+
 @router.get('clientes')
 def getClientes(request):
     cursor = connection.cursor()
@@ -157,6 +193,31 @@ def getContratos(request , query = '' , offset = 0):
     jsonContratos = json.dumps(jsonContratos)
     
     return  jsonContratos
+
+
+@router.get('pagination')
+def getPagination(request , query = '' , offset = 0):
+    cursor = connection.cursor()
+    
+    cursor.execute(f"""
+                    select 
+                    count(*) as "Total Contratos",
+                    ceiling(count(*)::double precision/10) as "Quantia de paginas"
+                    from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
+                    where ek_pessoa.nome like '%{query.upper()}%' 
+                    and ek_contrato.status = 'A'
+                   """)
+    paginacaoContratos = cursor.fetchall()
+
+    jsonPagination = {
+        'paginationContracts': {
+            'totalContracts' : paginacaoContratos[0][0],
+            'totalPages' : paginacaoContratos[0][1]
+        }
+    }
+
+    return  jsonPagination
+
 
 @router.get('get-contract-id/{seq_contrato}')
 def getContrctID(request,seq_contrato:int):
