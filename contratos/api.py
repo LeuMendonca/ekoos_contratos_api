@@ -15,24 +15,29 @@ router = Router()
 class Message(Schema):
     message: str
 
+def formatCapitalize(fullName):
+    return ' '.join(list(map(lambda x: x.capitalize() , fullName.split())))
 
-@router.get('auth',response={200:Message , 404:Message})
+@router.get('auth')
 def Authentication(request , user , password , company):
     cursor = connection.cursor()
 
-    cursor.execute(f"select nome_usuario, cod_usuario from ek_usuario where nome_usuario = '{user}' and senha = '{password}'")
+    cursor.execute(f"""select nome_usuario, cod_usuario , (select nome_empresa from ek_empresa where num_empresa = {company}) from ek_usuario
+                   where nome_usuario = '{user}' and senha = '{password}'""")
     userLogin = cursor.fetchall()
 
     if userLogin:
         dataUserLogin = {
-            "name": userLogin[0][0],
+            "name": formatCapitalize(str(userLogin[0][0])),
             "codUser": userLogin[0][1],
             "company": company,
+            "nameCompany": userLogin[0][2]
         }
 
-        return 200, {"message" : "Login realizado!" , 'data': dataUserLogin}
-    else:
-        return 404, {"message" : "Usuário inexistente!"}
+        return {'status': 200 , 'message' : 'Login efetuado com sucesso.' , 'data': dataUserLogin}
+    return { 'status' : 404 , 'message' : 'Usuário inexistente'}
+    
+    
         
         
 @router.get('empresas')
@@ -50,6 +55,16 @@ def getEmpresas(request):
             'label' : empresa[1] 
         })
     return listEmpresa
+
+@router.get('nome-empresa/{num_empresa}')
+def getNomeEmpresa(request, num_empresa: str):
+    cursor = connection.cursor()
+
+    cursor.execute(f'select nome_empresa from ek_empresa where num_empresa = {num_empresa}')
+    nameEmpresa = cursor.fetchall()[0][0]
+    print(nameEmpresa)
+
+    return { "nome_empresa" : nameEmpresa }
 
 @router.get('clientes')
 def getClientes(request):

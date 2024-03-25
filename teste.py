@@ -1,7 +1,15 @@
-from datetime import datetime
+# def formatCapitalize(name):
+#     return name.capitalize()
 
- = datetime.fromisoformat("2024-03-31")
- = datetime.fromisoformat("2024-03-05")
+# nome = 'LEONARDO MENDONCA'
 
-if x > y:
-    print("e maior")
+# nome = nome.split(' ')
+
+# textFormated = ' '.join(list(map(formatCapitalize , nome)))
+
+# print(textFormated)
+
+def formatCapitalize(fullName):
+    return ' '.join(list(map(lambda x: x.capitalize() , fullName.split())))
+
+print(formatCapitalize('Leonardo Mendonca'))
