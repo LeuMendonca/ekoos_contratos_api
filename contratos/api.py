@@ -109,11 +109,13 @@ def getDescProduto(request, cod_produto:int):
     return {"desc_produto" : desc_produto}
 
 @router.get('contratos')
-def getContratos(request , query = '' , offset = 0):
+def getContratos(request , query = '' , offset = 0 , num_empresa = 1):
     cursor = connection.cursor()
     
     resContratos = None
     paginacaoContratos = None
+
+    print(num_empresa)
 
     if not query:
         cursor.execute(f'''
@@ -126,21 +128,22 @@ def getContratos(request , query = '' , offset = 0):
                             substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date
                             from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
                             where ek_contrato.status = 'A'
+                            and num_empresa = {num_empresa}
                             order by seq_contrato desc
                             limit 10
                             offset {offset}
                     ''')
         resContratos = cursor.fetchall()
         
-        cursor.execute('''
+        cursor.execute(f'''
                         select 
                         count(*) as "Total Contratos",
                         ceiling(count(*)::double precision/10) as "Quantia de paginas"
                         from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
                         where ek_contrato.status = 'A'
+                        and num_empresa = {num_empresa}
                        ''')
         paginacaoContratos = cursor.fetchall()
-        # where ek_contrato.status = 'A'
     else:
         cursor.execute(f'''
                             select 
@@ -154,6 +157,7 @@ def getContratos(request , query = '' , offset = 0):
                             where 
                                 ek_pessoa.nome like '%{query.upper()}%' 
                                 and ek_contrato.status = 'A'
+                                and ek_contrato.num_empresa = {num_empresa}
                             order by seq_contrato desc
                             limit 10
                             offset {offset}
@@ -167,6 +171,7 @@ def getContratos(request , query = '' , offset = 0):
                     from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
                     where ek_pessoa.nome like '%{query.upper()}%' 
                     and ek_contrato.status = 'A'
+                    and ek_contrato.num_empresa = {num_empresa}
                    """)
         paginacaoContratos = cursor.fetchall()
         
@@ -236,7 +241,7 @@ def getContrctID(request,seq_contrato:int):
             'chvTransAuto' : lista[10], 
             'instalacao' : lista[11], 
             'manutencaoPeriodica' : lista[12], 
-            'cabos' : lista[13]
+            'cabos' : lista[13],
         }
 
     def separaDetalhes(lista):
@@ -296,6 +301,7 @@ def getContrctID(request,seq_contrato:int):
         'contract': contractID[0],
         'contractDetails': contractIDDetalhes
     }
+
 # ----------------------------------------------------------------------------------------------------------------
 class Itens(Schema):
     id: int = 0
@@ -308,10 +314,10 @@ class Itens(Schema):
     unit: str
 
 class Contrato(Schema):
-    num_empresa: int = 1
     num_contrato: int = 0
     totalPriceContract: int = 0
     client: int 
+    company: int = 1
     franchise: str 
     hours: str 
     initialDate: str 
@@ -340,7 +346,7 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
                             insert into ek_contrato(
                                 num_empresa, cod_pessoa, vl_contrato, dt_inicio_contrato, dt_fim_contrato, dt_cadastro, status, combustivel, qtd_combustivel, cabos,chave_transf_manual, chave_transf_auto, transporte, instalacao, manutencao, distancia_transporte, franquia, carga_horaria
                             ) values (
-                                1,{data.client},{data.totalPriceContract},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodica},{data.distancia_transporte},{data.franchise},{data.hours}
+                                {data.company},{data.client},{data.totalPriceContract},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodica},{data.distancia_transporte},{data.franchise},{data.hours}
                             ) returning seq_contrato
                     ''')
         seq_contrato = cursor.fetchall()[0][0]
