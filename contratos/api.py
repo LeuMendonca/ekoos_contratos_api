@@ -138,7 +138,8 @@ def getContratos(request , query = '' , offset = 0):
                             ek_pessoa.nome,
                             ek_contrato.vl_contrato,
                             substring(replace(ek_contrato.dt_inicio_contrato::text,'-','/') from 0 for 11)::date,
-                            substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date
+                            substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date,
+                            ek_contrato.dt_fim_contrato < now() as "vencido"
                             from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
                             where ek_contrato.status = 'A'
                             order by seq_contrato desc
@@ -164,7 +165,8 @@ def getContratos(request , query = '' , offset = 0):
                                 ek_pessoa.nome,
                                 ek_contrato.vl_contrato,
                                 substring(replace(ek_contrato.dt_inicio_contrato::text,'-','/') from 0 for 11)::date,
-                                substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date
+                                substring(replace(ek_contrato.dt_fim_contrato::text,'-','/') from 0 for 11)::date,
+                                ek_contrato.dt_fim_contrato < now() as "vencido"
                             from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
                             where 
                                 ek_pessoa.nome like '%{query.upper()}%' 
@@ -195,6 +197,7 @@ def getContratos(request , query = '' , offset = 0):
             'currencyContract' : contrato[3],
             'dateStart' : datetime.strftime(contrato[4] , "%d/%m/%Y"),
             'dateEnd' : datetime.strftime(contrato[5] , "%d/%m/%Y"),
+            'vencido' : contrato[6]
         })
 
     jsonContratos = {
