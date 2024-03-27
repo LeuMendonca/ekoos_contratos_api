@@ -36,8 +36,6 @@ def Authentication(request , user , password , company):
 
         return {'status': 200 , 'message' : 'Login efetuado com sucesso.' , 'data': dataUserLogin}
     return { 'status' : 404 , 'message' : 'Usuário inexistente'}
-    
-    
         
         
 @router.get('empresas')
@@ -95,11 +93,16 @@ def getProdutos(request):
     cursor = connection.cursor()
 
     cursor.execute('''
-                        (select '0' as cod_produto, 'Selecione um produto' as desc_produto)
+                        (
+                            select '0' as cod_produto, 'Selecione um produto' as desc_produto
+                        )
 
-                                                    UNION ALL
+                                                 UNION ALL
 
-                        (select cod_produto::varchar , desc_produto from ek_produto order by cod_produto)
+                        ( 
+                            select cod_produto::varchar , desc_produto 
+                                from ek_produto 
+                            where cod_produto <> 321 and tipo_item = 9 order by cod_produto::integer )
                     ''')
 
     resProduto = cursor.fetchall()
@@ -217,49 +220,26 @@ def getContratos(request , query = '' , offset = 0 , num_empresa = 1):
     
     return  jsonContratos
 
-
-@router.get('pagination')
-def getPagination(request , query = '' , offset = 0):
-    cursor = connection.cursor()
-    
-    cursor.execute(f"""
-                    select 
-                    count(*) as "Total Contratos",
-                    ceiling(count(*)::double precision/10) as "Quantia de paginas"
-                    from ek_pessoa inner join ek_contrato on ek_pessoa.cod_pessoa = ek_contrato.cod_pessoa
-                    where ek_pessoa.nome like '%{query.upper()}%' 
-                    and ek_contrato.status = 'A'
-                   """)
-    paginacaoContratos = cursor.fetchall()
-
-    jsonPagination = {
-        'paginationContracts': {
-            'totalContracts' : paginacaoContratos[0][0],
-            'totalPages' : paginacaoContratos[0][1]
-        }
-    }
-
-    return  jsonPagination
-
-
 @router.get('get-contract-id/{seq_contrato}')
 def getContrctID(request,seq_contrato:int):
     def separaContract(lista):
         return {
-            'seq_contrato' : lista[0], 
-            'client' : lista[1], 
-            'totalPriceContract' : lista[2], 
-            'initialDate' : lista[3], 
-            'finalDate' : lista[4], 
-            'franchise' : str(lista[5]), 
-            'hours' : str(lista[6]), 
-            'transporte' : lista[7], 
-            'combustivel' : lista[8], 
-            'chvTransManual' : lista[9], 
-            'chvTransAuto' : lista[10], 
-            'instalacao' : lista[11], 
-            'manutencaoPeriodica' : lista[12], 
-            'cabos' : lista[13],
+            'seq_contrato': lista[0], 
+            'client': lista[1], 
+            'totalPriceContract': lista[2], 
+            'initialDate': lista[3], 
+            'finalDate': lista[4], 
+            'franchise': str(lista[5]), 
+            'hours': str(lista[6]), 
+            'transporte': lista[7], 
+            'combustivel': lista[8], 
+            'chvTransManual': lista[9], 
+            'chvTransAuto': lista[10], 
+            'instalacao': lista[11], 
+            'manutencaoPeriodica': lista[12], 
+            'cabos': lista[13],
+            'distanciaTransporte': lista[14],
+            'quantidadeCombustivel': lista[15]
         }
 
     def separaDetalhes(lista):
@@ -290,7 +270,9 @@ def getContrctID(request,seq_contrato:int):
                         chave_transf_auto, 
                         instalacao, 
                         manutencao, 
-                        cabos
+                        cabos,
+                        distancia_transporte,
+                        qtd_combustivel
                     from ek_contrato
                     where seq_contrato = {seq_contrato}
                 ''')
@@ -344,11 +326,11 @@ class Contrato(Schema):
     chvTransAuto: bool = False
     chvTransManual: bool = False
     combustivel: bool = False
-    qtd_combustivel: float = 0
+    quantidadeCombustivel: float = 0
     instalacao: bool = False
     manutencaoPeriodica: bool = False
     transporte: bool = False
-    distancia_transporte: float = 0
+    distanciaTransporte: float = 0
     # listItems: List[Itens]
 
 
@@ -364,7 +346,7 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
                             insert into ek_contrato(
                                 num_empresa, cod_pessoa, vl_contrato, dt_inicio_contrato, dt_fim_contrato, dt_cadastro, status, combustivel, qtd_combustivel, cabos,chave_transf_manual, chave_transf_auto, transporte, instalacao, manutencao, distancia_transporte, franquia, carga_horaria
                             ) values (
-                                {data.company},{data.client},{data.totalPriceContract},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.qtd_combustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodica},{data.distancia_transporte},{data.franchise},{data.hours}
+                                {data.company},{data.client},{data.totalPriceContract},'{data.initialDate + ' 12:00'}','{data.finalDate + ' 12:00'}', now() ,'A' , {data.combustivel},{data.quantidadeCombustivel},{data.cabos},{data.chvTransManual},{data.chvTransAuto},{data.transporte},{data.instalacao},{data.manutencaoPeriodica},{data.distanciaTransporte},{data.franchise},{data.hours}
                             ) returning seq_contrato
                     ''')
         seq_contrato = cursor.fetchall()[0][0]
@@ -397,7 +379,7 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
                             {data.client},
                             'P',
                             '{datetime.now()}',
-                            1,
+                            { data.company },
                             'Pedido gerado através do contrato',
                             {seq_contrato}
                         )
@@ -474,6 +456,8 @@ def newContract( request ,data: Contrato , listItems: List[Itens] ):
 
 @router.put('update-contract/{seq_contrato}' , response={200: Message , 404: Message })
 def updateContract( request , seq_contrato:int ,data: Contrato , itens: List[Itens]):
+
+    print( data )
     
     cursor = connection.cursor()
 
@@ -495,7 +479,9 @@ def updateContract( request , seq_contrato:int ,data: Contrato , itens: List[Ite
                             chave_transf_auto = { data.chvTransAuto }, 
                             instalacao = { data.instalacao }, 
                             manutencao = { data.manutencaoPeriodica }, 
-                            cabos = { data.cabos }
+                            cabos = { data.cabos },
+                            distancia_transporte = { data.distanciaTransporte },
+			                qtd_combustivel = { data.quantidadeCombustivel }
                         WHERE seq_contrato = { seq_contrato };
                     ''')
 
@@ -685,27 +671,6 @@ def gera_nota_remessa(request, seq_contrato:int):
                            ''')
             cfop = cursor.fetchall()[0][0]
 
-            # cursor.execute(
-            #     f'''
-            #         select estado 
-            #         from ek_pessoa 
-            #         where cod_pessoa = {pedido[0]}
-            #     '''
-            # )
-            # estado_cliente = cursor.fetchall()[0][0]
-            # cursor.execute(
-            #     f'''select estado from
-            #         ek_empresa 
-            #         where num_empresa = 1'''
-            # )
-            # estado_empresa = cursor.fetchall()[0][0]
-            # cfop = 0
-            
-            # if int(estado_empresa) == int(estado_cliente):
-            #     cfop = 5949
-            # else:
-            #     cfop = 6949
-            # AJUSTAR QUANTIDADE E VALOR DO ITEM
             
             cursor.execute(f'''select serie_nfe 
                             from ek_configuracao 
