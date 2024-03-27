@@ -82,7 +82,7 @@ DATABASES = {
         "NAME": "ekoos",
         "USER": "postgres",
         "PASSWORD": "postgres",
-        # "HOST": "192.168.15.7",
+        # "HOST": "ekoos.ddns.net",
         "HOST": "localhost",
         "PORT": "5432",
     }
