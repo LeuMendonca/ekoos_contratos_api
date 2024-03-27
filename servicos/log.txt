@@ -1,0 +1,164 @@
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WsScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WsScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WsScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WsScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    Set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell");
+        ^
+SyntaxError: invalid syntax
+  File "C:\ekoos_contrato\servicos\servicoContratos.vbs", line 1
+    set objSh = CreateObject("WScript.Shell")
+        ^
+SyntaxError: invalid syntax
